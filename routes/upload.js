@@ -14,12 +14,12 @@ async function extractWithClaude(text) {
       'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1000,
       messages: [
         {
           role: 'user',
-          content: `You are processing a page from Lancaster Farming newspaper. Extract the following from the text and return ONLY a JSON object with no other text or markdown:
+          content: `You are processing a page from Lancaster Farming newspaper. Extract the following from the text and return ONLY a raw JSON object. Do not use markdown. Do not use backticks. Do not include any explanation. Return only the JSON object itself:
           {
             "date": "YYYYMMDD",
             "sectionLetter": "A",
@@ -39,6 +39,7 @@ async function extractWithClaude(text) {
   });
 
   const data = await response.json();
+  console.log('Claude response:', JSON.stringify(data, null, 2));
   const content = data.content[0].text;
   const parsed = JSON.parse(content);
 

@@ -1,6 +1,6 @@
 function extractMetadata(text) { // Helper function to extract metadata from the text
   const headerMatch = text.match(
-    /Lancaster Farming,\s+\w+,\s+(\w+ \d+,\s+\d{4})\s+-\s+([A-Z])(\d+)/
+    /Philly Online,\s+\w+,\s+(\w+ \d+,\s+\d{4})\s+-\s+([A-Z])(\d+)/
   );
 
   if (!headerMatch) {
