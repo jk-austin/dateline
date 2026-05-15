@@ -3,6 +3,48 @@ const router = express.Router();
 const multer = require('../middleware/multerConfig');
 const fs = require('fs');
 const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.mjs');
+const extractMetadata = require('../middleware/extractMetadata');
+
+async function extractWithClaude(text) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [
+        {
+          role: 'user',
+          content: `You are processing a page from Lancaster Farming newspaper. Extract the following from the text and return ONLY a JSON object with no other text or markdown:
+          {
+            "date": "YYYYMMDD",
+            "sectionLetter": "A",
+            "pageNumber": "001",
+            "sectionName": "MAIN"
+          }
+          
+          Section name mapping: A=MAIN, B=NEWS, C=CLASSIFIEDS, D=GROWER
+          
+          If you cannot determine a value, use "UNKNOWN".
+          
+          Text to process:
+          ${text}`
+        }
+      ]
+    })
+  });
+
+  const data = await response.json();
+  const content = data.content[0].text;
+  const parsed = JSON.parse(content);
+
+  const filename = `LF_${parsed.date}_${parsed.sectionName}_${parsed.sectionLetter}_${parsed.pageNumber}.PDF`;
+  return { ...parsed, filename };
+}
 
 router.post('/', multer.single('pdf'), async (req, res) => {
   try {
@@ -18,7 +60,15 @@ router.post('/', multer.single('pdf'), async (req, res) => {
 
     fs.unlinkSync(req.file.path);
 
-    res.json({ text });
+    let metadata = extractMetadata(text);
+    let source = 'regex';
+
+    if (!metadata) {
+      metadata = await extractWithClaude(text);
+      source = 'claude';
+    }
+
+    res.json({ ...metadata, source });
 
   } catch (err) {
     res.status(500).json({ error: err.message });
