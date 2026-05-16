@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "archiver": "^8.0.0",
     "autoprefixer": "^10.5.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"

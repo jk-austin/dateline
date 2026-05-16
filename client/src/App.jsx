@@ -22,6 +22,46 @@ function App() {
     setResults(prev => prev.map((r, i) => i === index ? { ...r, ...updates } : r))
   }
 
+async function downloadAll() {
+  try {
+    const done = results.filter(r => r.status === 'done')
+    console.log('Files to zip:', done.length)
+    
+    const fileData = await Promise.all(
+      done.map(async (result) => {
+        const file = files[results.indexOf(result)]
+        console.log('Processing file:', result.filename, 'file object:', file)
+        const buffer = await file.arrayBuffer()
+        const bytes = new Uint8Array(buffer)
+        let binary = ''
+        for (let j = 0; j < bytes.byteLength; j++) {
+          binary += String.fromCharCode(bytes[j])
+        }
+        const base64 = btoa(binary)
+        return { filename: result.filename, data: base64 }
+      })
+    )
+
+    console.log('Sending to backend...')
+    const response = await fetch('http://localhost:3000/download-all', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: fileData })
+    })
+
+    console.log('Response status:', response.status)
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'dateline-export.zip'
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    console.error('Download all error:', err)
+  }
+}
+
   async function processFiles() {
     setLoading(true)
 
@@ -141,6 +181,14 @@ function App() {
             >
               {loading ? `Processing ${doneCount} of ${files.length}...` : `Process ${files.length} file(s)`}
             </button>
+            {doneCount > 0 && !loading && (
+            <button
+              onClick={downloadAll}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+            >
+              Download All ({doneCount})
+            </button>
+            )}
             {failedCount > 0 && !loading && (
               <button
                 onClick={retryFailed}
