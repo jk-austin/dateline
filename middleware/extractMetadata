@@ -1,16 +1,24 @@
-function extractMetadata(text) { // Helper function to extract metadata from the text
-  const headerMatch = text.match(
-    /Lancaster Farming,\s+\w+,\s+(\w+ \d+,\s+\d{4})\s+-\s+([A-Z])(\d+)/
-  );
+function extractMetadata(text) {
+  const headerMatch = 
+    text.match(/Lancaster Farming,\s+\w+,\s+(\w+ \d+,\s+\d{4})\s+-\s+([A-Z])(\d+)/) ||
+    text.match(/([A-Z])(\d+)\s+-\s+Lancaster Farming,\s+\w+,\s+(\w+ \d+,\s+\d{4})/);
 
   if (!headerMatch) {
     return null;
   }
 
     // Extracted values, place 0 is the full match, so we start from 1
-  const rawDate = headerMatch[1];
-  const sectionLetter = headerMatch[2];
-  const pageNumber = headerMatch[3].padStart(3, '0');
+  let rawDate, sectionLetter, pageNumber;
+
+  if (headerMatch[0].startsWith('Lancaster')) {
+    rawDate = headerMatch[1];
+    sectionLetter = headerMatch[2];
+    pageNumber = headerMatch[3].padStart(3, '0');
+  } else {
+    sectionLetter = headerMatch[1];
+    pageNumber = headerMatch[2].padStart(3, '0');
+    rawDate = headerMatch[3];
+  }
   
   // Format the date as YYYYMMDD
   const date = new Date(rawDate);

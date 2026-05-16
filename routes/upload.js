@@ -38,6 +38,7 @@ async function extractWithClaude(text) {
     })
   });
 
+
   const data = await response.json();
   console.log('Claude response:', JSON.stringify(data, null, 2));
   const content = data.content[0].text;
