@@ -21,6 +21,7 @@ app.get('/', (req, res) => {
   res.json({ status: 'Dateline is running' });
 });
 
+// Start the server
 app.listen(PORT, () => {
   console.log(`Dateline running on port ${PORT}`);
 });

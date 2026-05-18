@@ -1,10 +1,13 @@
 import { useState } from 'react'
 
+// Main application component
 function App() {
   const [files, setFiles] = useState([])
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
+  const [downloadError, setDownloadError] = useState(null)
 
+  // Handle file selection
   function handleFileChange(e) {
     const selected = Array.from(e.target.files)
     setResults(selected.map(file => ({
@@ -16,21 +19,24 @@ function App() {
       error: null
     })))
     setFiles(selected)
+    setDownloadError(null)
   }
 
+  // Helper function to update a specific result by index
   function updateResult(index, updates) {
     setResults(prev => prev.map((r, i) => i === index ? { ...r, ...updates } : r))
   }
 
+// Function to call the backend API to download all files as a zip
 async function downloadAll() {
   try {
+    // Filter results to only include successfully processed files
     const done = results.filter(r => r.status === 'done')
-    console.log('Files to zip:', done.length)
     
+    // Convert each file to base64 and prepare the payload for the backend
     const fileData = await Promise.all(
       done.map(async (result) => {
         const file = files[results.indexOf(result)]
-        console.log('Processing file:', result.filename, 'file object:', file)
         const buffer = await file.arrayBuffer()
         const bytes = new Uint8Array(buffer)
         let binary = ''
@@ -42,14 +48,13 @@ async function downloadAll() {
       })
     )
 
-    console.log('Sending to backend...')
+    // Call the backend API to create the zip file
     const response = await fetch('http://localhost:3000/download-all', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ files: fileData })
     })
 
-    console.log('Response status:', response.status)
     const blob = await response.blob()
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -59,9 +64,11 @@ async function downloadAll() {
     URL.revokeObjectURL(url)
   } catch (err) {
     console.error('Download all error:', err)
+    setDownloadError('Download failed: ' + err.message)
   }
 }
 
+  // Function to process each file by sending it to the backend API
   async function processFiles() {
     setLoading(true)
 
@@ -77,7 +84,8 @@ async function downloadAll() {
           body: formData
         })
         const data = await response.json()
-
+        
+        // Update the result based on the API response
         if (data.error) {
           updateResult(i, { status: 'failed', error: data.error })
         } else {
@@ -101,25 +109,25 @@ async function downloadAll() {
 
     setLoading(false)
   }
-
+  // Function to retry failed files
   async function retryFailed() {
     const failedIndexes = results
       .map((r, i) => r.status === 'failed' ? i : null)
       .filter(i => i !== null)
-
+    // Process each failed file again
     for (const i of failedIndexes) {
       updateResult(i, { status: 'processing', error: null })
-
+      // Create a new FormData object for the file
       const formData = new FormData()
       formData.append('pdf', files[i])
-
+      // Call the backend API to process the file
       try {
         const response = await fetch('http://localhost:3000/upload', {
           method: 'POST',
           body: formData
         })
         const data = await response.json()
-
+        // Update the result based on the API response
         if (data.error) {
           updateResult(i, { status: 'failed', error: data.error })
         } else {
@@ -135,30 +143,30 @@ async function downloadAll() {
       } catch (err) {
         updateResult(i, { status: 'failed', error: err.message })
       }
-
+      // Add a short delay between retries to avoid overwhelming the backend
       if (i < failedIndexes.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 500))
       }
     }
   }
-
+  // Calculate counts of failed and done files for UI display
   const failedCount = results.filter(r => r.status === 'failed').length
   const doneCount = results.filter(r => r.status === 'done').length
-
+  // Define status colors and labels for UI display
   const statusColor = {
     pending: 'text-gray-400',
     processing: 'text-blue-500',
     done: 'text-green-600',
     failed: 'text-red-500'
   }
-
+  // Define human-readable labels for each status
   const statusLabel = {
     pending: 'Pending',
     processing: 'Processing...',
     done: 'Done',
     failed: 'Failed'
   }
-
+  // Render the main application UI
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-3xl mx-auto">
@@ -198,6 +206,9 @@ async function downloadAll() {
               </button>
             )}
           </div>
+          {downloadError && (
+            <p className="text-red-500 text-sm mt-3">{downloadError}</p>
+          )}
         </div>
 
         {results.length > 0 && (
