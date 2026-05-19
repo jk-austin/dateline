@@ -4,6 +4,8 @@ A batch PDF renaming tool for Lancaster Farming. Upload a batch of PDFs, and Dat
 
 **Output format:** `LF_20260124_MAIN_A_001.PDF`
 
+[Lancaster Farming Dateline Renaming App](https://dateline-six.vercel.app/)
+
 ---
 
 ## Table of Contents
