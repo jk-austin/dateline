@@ -35,9 +35,9 @@ function extractMetadata(text) {
   // Map section letters to section names, need to update based on actual sections
   const sectionNames = {
     A: 'MAIN',
-    B: 'FAMILY',
-    C: 'BUSINESS',
-    D: 'CLASSIFIEDS',
+    B: 'MAIN',
+    C: 'MAIN',
+    D: 'MAIN',
   };
 
   // Get the section name based on the section letter, default to 'UNKNOWN' if not found
