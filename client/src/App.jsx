@@ -1,4 +1,5 @@
 import { useState } from 'react'
+const API_URL = 'https://dateline-production.up.railway.app'
 
 // Main application component
 function App() {
@@ -49,7 +50,7 @@ async function downloadAll() {
     )
 
     // Call the backend API to create the zip file
-    const response = await fetch('http://localhost:3000/download-all', {
+    const response = await fetch(`${API_URL}/download-all`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ files: fileData })
@@ -79,7 +80,7 @@ async function downloadAll() {
       formData.append('pdf', files[i])
 
       try {
-        const response = await fetch('http://localhost:3000/upload', {
+        const response = await fetch(`${API_URL}/upload`, {
           method: 'POST',
           body: formData
         })
@@ -122,7 +123,7 @@ async function downloadAll() {
       formData.append('pdf', files[i])
       // Call the backend API to process the file
       try {
-        const response = await fetch('http://localhost:3000/upload', {
+        const response = await fetch(`${API_URL}/upload`, {
           method: 'POST',
           body: formData
         })
