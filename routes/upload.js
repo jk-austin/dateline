@@ -97,7 +97,7 @@ router.post('/', multer.single('pdf'), async (req, res) => {
     // If both methods fail, return an error
     res.json({ ...metadata, source });
 
-  // } catch (err) {
+  } catch (err) {
     // if (req.file && fs.existsSync(req.file.path)) {
       // fs.unlinkSync(req.file.path);
     //}
