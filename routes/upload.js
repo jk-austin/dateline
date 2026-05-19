@@ -2,7 +2,6 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('../middleware/multerConfig');
-const fs = require('fs');
 const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.mjs');
 const extractMetadata = require('../middleware/extractMetadata');
 
@@ -48,7 +47,7 @@ async function extractWithClaude(text) {
     throw new Error(`Claude API error: ${data.error?.message || response.status}`);
   }
 
-  console.log('Claude response:', JSON.stringify(data, null, 2));
+  // console.log('Claude response:', JSON.stringify(data, null, 2));
   const rawText = data.content[0].text;
   
   // Attempt to parse Claude's response as JSON
@@ -77,14 +76,14 @@ router.post('/', multer.single('pdf'), async (req, res) => {
     }
     
     // Read the uploaded PDF file into a buffer and extract text using pdfjs
-    const dataBuffer = new Uint8Array(fs.readFileSync(req.file.path));
+    const dataBuffer = new Uint8Array(req.file.buffer);
     const pdf = await pdfjsLib.getDocument({ data: dataBuffer }).promise;
     const page = await pdf.getPage(1);
     const content = await page.getTextContent();
     const text = content.items.map(item => item.str).join(' ');
 
     // 
-    fs.unlinkSync(req.file.path);
+    // fs.unlinkSync(req.file.path);
 
     let metadata = extractMetadata(text);
     let source = 'regex';
@@ -98,10 +97,10 @@ router.post('/', multer.single('pdf'), async (req, res) => {
     // If both methods fail, return an error
     res.json({ ...metadata, source });
 
-  } catch (err) {
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
+  // } catch (err) {
+    // if (req.file && fs.existsSync(req.file.path)) {
+      // fs.unlinkSync(req.file.path);
+    //}
     res.status(500).json({ error: err.message });
   }
 });
